@@ -13,11 +13,12 @@
             <my-button onclick="onChange(this)"></my-button>
         </p>
         <hr />
+        <p>下面 4 个操作按钮样式也是 .my-button，但是不在 shadowDome 中不生效</p>
         <p>
-            <button class="do" onclick="addBtn()">添加</button>
-            <button class="do" onclick="onChange(document.querySelector('#container my-button'))" disabled>更新</button>
-            <button class="do" onclick="removeBtn()" disabled>删除</button>
-            <button class="do" onclick="adoptBtn()" disabled>迁移</button>
+            <button class="do my-button" onclick="addBtn()">添加</button>
+            <button class="do my-button" onclick="onChange(document.querySelector('#container my-button'))" disabled>更新</button>
+            <button class="do my-button" onclick="removeBtn()" disabled>删除</button>
+            <button class="do my-button" onclick="adoptBtn()" disabled>迁移</button>
         </p>
         <p id="container"></p>
         <p>事件：</p>
