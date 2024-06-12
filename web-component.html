@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div>
+        <p>点击按钮切换颜色</p>
+        <p>
+            <my-button type="primary" onclick="onChange(this)">我是按钮</my-button>
+            <my-button onclick="onChange(this)"></my-button>
+        </p>
+        <hr />
+        <p>
+            <button class="do" onclick="addBtn()">添加</button>
+            <button class="do" onclick="onChange(document.querySelector('#container my-button'))" disabled>更新</button>
+            <button class="do" onclick="removeBtn()" disabled>删除</button>
+            <button class="do" onclick="adoptBtn()" disabled>迁移</button>
+        </p>
+        <p id="container"></p>
+        <p>事件：</p>
+        <p><textarea id="tips" rows="12"></textarea></p>
+    </div>
+    <!-- template 是浏览器内置标签，默认不会显示 -->
+     <template id="btn">
+        <button class="my-button"><slot>按钮</slot></button>
+     </template>
+     <script>
+        class MyButton extends HTMLElement {
+            static get observedAttributes() {
+                return ['type'];
+            }
+            constructor() {
+                super();
+
+                // 先添加当前组件的隔离模式
+                this.shadow = this.attachShadow({ mode: "closed" });
+
+            }
+            adoptedCallback() {
+                this.dispatchEvent(new CustomEvent("adopted"));
+            }
+            attributeChangedCallback(name, oldvalue, newvalue) {
+                const button = this.shadow.querySelector(".my-button");
+                if (button !== null) {
+                    button.className = `my-button ${newvalue}`;
+                    this.dispatchEvent(new CustomEvent("update"));
+                }
+            }
+            // 类似 vue 组件的 mounted
+            connectedCallback() {
+                // 元素挂载完成后，需要获取传入的属性，并且使用对应的模板来渲染
+                // 拿到模板放到 shadowDom 中
+                const btn = document.getElementById("btn");
+                const tpl = btn.content.cloneNode(true);
+
+                const btnType = this.getAttribute("type");
+                tpl.querySelector(".my-button").classList.add(btnType === "primary" ? btnType : "default");
+
+                this.shadow.appendChild(this._style());
+                this.shadow.appendChild(tpl);
+
+                this.dispatchEvent(new CustomEvent("mounted"));
+            }
+            disconnectedCallback() {
+                this.dispatchEvent(new CustomEvent("deleted"));
+            }
+            _style() {
+                const style = document.createElement("style");
+                style.innerHTML = `
+                    .my-button {
+                        cursor: pointer;
+                        color: #fff;
+                        padding: 20px;
+                    }
+                    .primary {
+                        background-color: blue;
+                    }
+                    .default {
+                        background-color: #a1a1a1;
+                    }
+                `;
+                return style;
+            }
+        }
+
+        window.customElements.define("my-button", MyButton);
+        function onChange(btn) {
+            const type = btn.getAttribute("type");
+            btn.setAttribute("type", type === "primary" ? "default" : "primary");
+        }
+
+        // 事件监听
+        function mounted(event) {
+            const tips = document.getElementById("tips");
+            const value = tips.value.split("\n");
+
+            value.push(event.type);
+            tips.value = value.filter(Boolean).join("\n");
+            tips.scrollTop = tips.scrollHeight;
+
+            const button = document.querySelector("#container my-button");
+            const list = document.querySelectorAll(".do");
+
+            list.forEach((elem, i) => {
+                if (i === 0) {
+                    button !== null ? elem.setAttribute("disabled", true) : elem.removeAttribute("disabled");
+                } else {
+                    button === null ? elem.setAttribute("disabled", true) : elem.removeAttribute("disabled");
+                }
+            });
+        }
+
+        function addCustomEventListener(elem) {
+            elem.addEventListener("adopted", mounted);
+            elem.addEventListener("deleted", mounted);
+            elem.addEventListener("mounted", mounted);
+            elem.addEventListener("update", mounted);
+        }
+
+        function addBtn() {
+            const button = document.createElement("my-button");
+            button.setAttribute("type", "primary");
+            button.innerText = "custom event";
+
+            addCustomEventListener(button);
+            document.getElementById("container").appendChild(button);
+        }
+
+        function adoptBtn() {
+            const button = document.querySelector("#container my-button");
+            if (button) {
+                const newDoc = document.implementation.createHTMLDocument('New Doc');
+                newDoc.body.appendChild(document.adoptNode(button));
+            }
+        }
+
+        function removeBtn() {
+            const button = document.querySelector("#container my-button");
+            if (button) {
+                button.remove();
+            }
+        }
+     </script>
+</body>
+</html>
