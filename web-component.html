@@ -9,7 +9,7 @@
     <div>
         <p>点击按钮切换颜色</p>
         <p>
-            <my-button type="primary" onclick="onChange(this)">我是按钮</my-button>
+            <my-button type="primary" name="custom" onclick="onChange(this)">我是按钮</my-button>
             <my-button onclick="onChange(this)"></my-button>
         </p>
         <hr />
@@ -31,7 +31,7 @@
      <script>
         class MyButton extends HTMLElement {
             static get observedAttributes() {
-                return ['type'];
+                return ["name", 'type'];
             }
             constructor() {
                 super();
